@@ -1,5 +1,16 @@
+import os
+import sys
+
+# Define root of the project
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+sys.path.insert(0, ROOT_DIR)
+
+# Optional: subfolders if needed
+for subdir in ['data', 'models', 'scripts/utils']:
+    sys.path.insert(0, os.path.join(ROOT_DIR, subdir))
+
+from ac_opf.create_example_parameters import create_example_parameters
 from types import SimpleNamespace
-from nn_training_ac_crown_pg_vm import train
 
 
 def create_config():
@@ -30,6 +41,21 @@ def create_config():
 
 def main():
     config = create_config()
+    
+    # define test system
+    n_buses = config.test_system
+    simulation_parameters = create_example_parameters(n_buses)
+    nn_config = simulation_parameters['nn_output']
+    
+    # define training paradigm
+    if nn_config == 'pg_vm':
+        from nn_training_ac_crown_pg_vm import train
+    elif nn_config == 'pg_qg':
+        from nn_training_ac_crown_pg_qg import train
+    else:
+        print("Training paradigm not recognized.")
+    
+    # start training
     train(config=config)
 
 
