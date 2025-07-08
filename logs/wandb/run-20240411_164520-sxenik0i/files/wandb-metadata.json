@@ -1,0 +1,154 @@
+{
+    "os": "Linux-5.4.272-1.el7.elrepo.x86_64-x86_64-with-redhat-7.9-Nitrogen",
+    "python": "3.7.13",
+    "heartbeatAt": "2024-04-11T14:45:21.458909",
+    "startedAt": "2024-04-11T14:45:20.540476",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "create_sweep_config.py",
+    "codePathLocal": "create_sweep_config.py",
+    "codePath": "create_sweep_config.py",
+    "host": "n-62-21-61",
+    "username": "rnelli",
+    "executable": "/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/bin/python",
+    "cpu_count": 24,
+    "cpu_count_logical": 24,
+    "cpu_freq": {
+        "current": 1787.3791250000002,
+        "min": 1200.0,
+        "max": 2900.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1197.32,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1596.233,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.284,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.294,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.974,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.215,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.192,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.103,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1596.692,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.557,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2195.037,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.335,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.454,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.454,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.454,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.454,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1796.601,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.281,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.726,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.454,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.454,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.453,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.453,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.456,
+            "min": 1200.0,
+            "max": 2900.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 71.9168586730957,
+            "used": 5.0582275390625
+        }
+    },
+    "memory": {
+        "total": 251.50286865234375
+    }
+}

@@ -1,0 +1,17 @@
+BatchNorm1d may raise error during conversion when the model is in train() mode!
+Set model to eval() mode!
+Running on cpu
+/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py:329: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  x=torch.tensor(x.detach(), requires_grad=True).to(device)
+Traceback (most recent call last):
+  File "/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py", line 117, in train
+    X,Y,typ = wc_enriching(network_gen, config, Dem_train,Data_stat)
+  File "/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py", line 304, in wc_enriching
+    Adverse_example_n = GradAscnt(network_gen,Adverse_example_n,Data_stat)
+  File "/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py", line 333, in GradAscnt
+    loss.backward()
+  File "/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/torch/_tensor.py", line 363, in backward
+    torch.autograd.backward(self, gradient, retain_graph, create_graph, inputs=inputs)
+  File "/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/torch/autograd/__init__.py", line 175, in backward
+    allow_unreachable=True, accumulate_grad=True)  # Calls into the C++ engine to run the backward pass
+Exception

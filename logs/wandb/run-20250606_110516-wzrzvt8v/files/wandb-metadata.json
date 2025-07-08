@@ -1,0 +1,27 @@
+{
+  "os": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+  "python": "CPython 3.10.16",
+  "startedAt": "2025-06-06T09:05:17.006417Z",
+  "program": "/home/rnelli/MinMax/create_single_run.py",
+  "codePath": "create_single_run.py",
+  "email": "rnelli@elektro.dtu.dk",
+  "root": "/home/rnelli/MinMax",
+  "host": "DTU-5CG42755MY",
+  "executable": "/home/rnelli/miniconda3/envs/train_forcast/bin/python",
+  "codePathLocal": "create_single_run.py",
+  "cpu_count": 8,
+  "cpu_count_logical": 16,
+  "disk": {
+    "/": {
+      "total": "1081101176832",
+      "used": "55901052928"
+    }
+  },
+  "memory": {
+    "total": "16389582848"
+  },
+  "cpu": {
+    "count": 8,
+    "countLogical": 16
+  }
+}

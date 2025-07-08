@@ -1,0 +1,16 @@
+{"time":"2025-06-06T11:07:18.945709539+02:00","level":"INFO","msg":"stream: starting","core version":"0.19.11","symlink path":"/home/rnelli/MinMax/wandb/run-20250606_110718-ykthqazj/logs/debug-core.log"}
+{"time":"2025-06-06T11:07:19.393731564+02:00","level":"INFO","msg":"created new stream","id":"ykthqazj"}
+{"time":"2025-06-06T11:07:19.393799937+02:00","level":"INFO","msg":"stream: started","id":"ykthqazj"}
+{"time":"2025-06-06T11:07:19.394723902+02:00","level":"INFO","msg":"writer: Do: started","stream_id":"ykthqazj"}
+{"time":"2025-06-06T11:07:19.394840373+02:00","level":"INFO","msg":"handler: started","stream_id":"ykthqazj"}
+{"time":"2025-06-06T11:07:19.394860536+02:00","level":"INFO","msg":"sender: started","stream_id":"ykthqazj"}
+{"time":"2025-06-06T11:07:19.701795317+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-06T11:14:31.316823976+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-06-06T11:14:31.316916887+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-06-06T11:14:32.241150153+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-06-06T11:14:32.320726015+02:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading history steps 1919-1999, summary","runtime_seconds":0.078902286}],"total_operations":1}}
+{"time":"2025-06-06T11:14:32.615385118+02:00","level":"INFO","msg":"stream: closing","id":"ykthqazj"}
+{"time":"2025-06-06T11:14:32.615492027+02:00","level":"INFO","msg":"handler: closed","stream_id":"ykthqazj"}
+{"time":"2025-06-06T11:14:32.615544655+02:00","level":"INFO","msg":"sender: closed","stream_id":"ykthqazj"}
+{"time":"2025-06-06T11:14:32.615520981+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":"ykthqazj"}
+{"time":"2025-06-06T11:14:32.61578459+02:00","level":"INFO","msg":"stream: closed","id":"ykthqazj"}

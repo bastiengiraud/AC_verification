@@ -1,0 +1,24 @@
+BatchNorm1d may raise error during conversion when the model is in train() mode!
+Set model to eval() mode!
+Running on cpu
+Traceback (most recent call last):
+  File "/home/rnelli/miniconda3/envs/train_forcast/lib/python3.10/site-packages/torch/onnx/_internal/onnx_proto_utils.py", line 219, in _add_onnxscript_fn
+    import onnx
+ModuleNotFoundError: No module named 'onnx'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/rnelli/MinMax/NN_Training_DC_Crown.py", line 139, in train
+    early_stopping(validation_loss, network_gen)
+  File "/home/rnelli/MinMax/EarlyStopping.py", line 37, in __call__
+    self.save_checkpoint(val_loss, model,model2)
+  File "/home/rnelli/MinMax/EarlyStopping.py", line 57, in save_checkpoint
+    torch.onnx.export(model,               # model being run
+  File "/home/rnelli/miniconda3/envs/train_forcast/lib/python3.10/site-packages/torch/onnx/utils.py", line 516, in export
+    _export(
+  File "/home/rnelli/miniconda3/envs/train_forcast/lib/python3.10/site-packages/torch/onnx/utils.py", line 1686, in _export
+    proto = onnx_proto_utils._add_onnxscript_fn(
+  File "/home/rnelli/miniconda3/envs/train_forcast/lib/python3.10/site-packages/torch/onnx/_internal/onnx_proto_utils.py", line 221, in _add_onnxscript_fn
+    raise errors.OnnxExporterError("Module onnx is not installed!") from e
+torch.onnx.errors.OnnxExporterError: Module onnx is not installed!

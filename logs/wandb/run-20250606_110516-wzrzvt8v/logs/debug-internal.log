@@ -1,0 +1,16 @@
+{"time":"2025-06-06T11:05:17.012752383+02:00","level":"INFO","msg":"stream: starting","core version":"0.19.11","symlink path":"/home/rnelli/MinMax/wandb/run-20250606_110516-wzrzvt8v/logs/debug-core.log"}
+{"time":"2025-06-06T11:05:17.433248572+02:00","level":"INFO","msg":"created new stream","id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:17.43334562+02:00","level":"INFO","msg":"stream: started","id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:17.433415442+02:00","level":"INFO","msg":"writer: Do: started","stream_id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:17.433470649+02:00","level":"INFO","msg":"sender: started","stream_id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:17.433574808+02:00","level":"INFO","msg":"handler: started","stream_id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:17.733869414+02:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-06T11:05:26.521213196+02:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-06-06T11:05:26.521306419+02:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-06-06T11:05:27.524966345+02:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading output.log","runtime_seconds":0.773745231,"progress":"1.4KB/1.4KB"},{"desc":"uploading config.yaml","runtime_seconds":0.561189663,"progress":"1.0KB/1.0KB"}],"total_operations":2}}
+{"time":"2025-06-06T11:05:27.621506697+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-06-06T11:05:27.961480554+02:00","level":"INFO","msg":"stream: closing","id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:27.961639223+02:00","level":"INFO","msg":"handler: closed","stream_id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:27.961698345+02:00","level":"INFO","msg":"sender: closed","stream_id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:27.961696968+02:00","level":"INFO","msg":"writer: Close: closed","stream_id":"wzrzvt8v"}
+{"time":"2025-06-06T11:05:27.961822633+02:00","level":"INFO","msg":"stream: closed","id":"wzrzvt8v"}

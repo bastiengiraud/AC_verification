@@ -1,0 +1,154 @@
+{
+    "os": "Linux-5.4.272-1.el7.elrepo.x86_64-x86_64-with-redhat-7.9-Nitrogen",
+    "python": "3.7.13",
+    "heartbeatAt": "2024-04-03T12:12:58.570226",
+    "startedAt": "2024-04-03T12:12:57.661042",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "Create_Agent.py",
+    "codePathLocal": "Create_Agent.py",
+    "codePath": "Create_Agent.py",
+    "host": "n-62-21-51",
+    "username": "rnelli",
+    "executable": "/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/bin/python",
+    "cpu_count": 24,
+    "cpu_count_logical": 24,
+    "cpu_freq": {
+        "current": 1301.0807916666668,
+        "min": 1200.0,
+        "max": 2900.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 1197.268,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1206.201,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1280.954,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.243,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.292,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1198.522,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1195.875,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.761,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.309,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.83,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.043,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1198.583,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1196.13,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 2494.275,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.235,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1195.966,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1196.446,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.856,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.041,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.197,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1196.108,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.79,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1197.026,
+            "min": 1200.0,
+            "max": 2900.0
+        },
+        {
+            "current": 1202.908,
+            "min": 1200.0,
+            "max": 2900.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 71.9168586730957,
+            "used": 5.074985504150391
+        }
+    },
+    "memory": {
+        "total": 251.50287246704102
+    }
+}

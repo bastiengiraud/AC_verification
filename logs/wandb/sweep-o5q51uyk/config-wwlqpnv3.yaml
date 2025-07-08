@@ -1,0 +1,34 @@
+wandb_version: 1
+
+Algo:
+  value: true
+Enrich:
+  value: true
+GenV_weight:
+  value: 0.00019620791042368013
+LPF_weight:
+  value: 0.00725124719889952
+N_enrich:
+  value: 200
+PF_weight:
+  value: 0.00027503401595128105
+abc_method:
+  value: IBP
+batch_size:
+  value: 1000
+dataset_split_seed:
+  value: 0
+epochs:
+  value: 4000
+hidden_layer_size:
+  value: 50
+learning_rate:
+  value: 0.001
+lr_decay:
+  value: 0.5
+n_hidden_layers:
+  value: 3
+pytorch_init_seed:
+  value: 2
+test_system:
+  value: 1354

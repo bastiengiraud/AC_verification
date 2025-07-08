@@ -1,0 +1,20 @@
+/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/pandas/core/internals/managers.py:477: ResourceWarning: unclosed <socket.socket fd=4, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 56118), raddr=('127.0.0.1', 43085)>
+  dtypes = [blk.dtype for blk in self.blocks if blk._can_consolidate]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/pandas/core/internals/managers.py:477: ResourceWarning: unclosed <socket.socket fd=9, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 49126), raddr=('127.0.0.1', 44949)>
+  dtypes = [blk.dtype for blk in self.blocks if blk._can_consolidate]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/pandas/core/internals/managers.py:477: ResourceWarning: unclosed <socket.socket fd=11, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 45208), raddr=('127.0.0.1', 33495)>
+  dtypes = [blk.dtype for blk in self.blocks if blk._can_consolidate]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/pandas/core/internals/managers.py:477: ResourceWarning: unclosed <socket.socket fd=13, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 51092), raddr=('127.0.0.1', 45027)>
+  dtypes = [blk.dtype for blk in self.blocks if blk._can_consolidate]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/pandas/core/internals/managers.py:477: ResourceWarning: unclosed <socket.socket fd=15, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 47314), raddr=('127.0.0.1', 40475)>
+  dtypes = [blk.dtype for blk in self.blocks if blk._can_consolidate]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/pandas/core/internals/managers.py:477: ResourceWarning: unclosed <socket.socket fd=17, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=0, laddr=('127.0.0.1', 34396), raddr=('127.0.0.1', 40591)>
+  dtypes = [blk.dtype for blk in self.blocks if blk._can_consolidate]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+Running on cpu
+Early stopping

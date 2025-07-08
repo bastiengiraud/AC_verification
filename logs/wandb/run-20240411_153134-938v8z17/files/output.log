@@ -1,0 +1,18 @@
+BatchNorm1d may raise error during conversion when the model is in train() mode!
+Set model to eval() mode!
+Running on cpu
+/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py:329: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  x=torch.tensor(x.detach(), requires_grad=True).to(device)
+wandb: Ctrl + C detected. Stopping sweep.
+Traceback (most recent call last):
+  File "/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py", line 133, in train
+    training_loss = train_epoch(network_gen, InputNN, OutputNN, typNN,optimizer,config,simulation_parameters)
+  File "/zhome/43/1/159866/PINN/MinMax/NN_Training_DC_Crown.py", line 229, in train_epoch
+    Gen_output = network_gen.forward_train(Dem_train[slce])
+  File "/zhome/43/1/159866/PINN/MinMax/Neural_Network/lightning_NN_Crown.py", line 81, in forward_train
+    x=self.Input_Normalise(x)
+  File "/zhome/43/1/159866/miniconda3/envs/alpha-beta-crown/lib/python3.7/site-packages/torch/nn/modules/module.py", line 1110, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/zhome/43/1/159866/PINN/MinMax/Neural_Network/lightning_NN_Crown.py", line 151, in forward
+    return (input - self.minimum) / (self.delta + self.eps)
+Exception

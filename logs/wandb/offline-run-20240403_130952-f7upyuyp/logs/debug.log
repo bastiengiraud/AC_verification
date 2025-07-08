@@ -1,0 +1,46 @@
+2024-04-03 13:09:52,827 INFO    MainThread:31606 [wandb_setup.py:_flush():68] Configure stats pid to 31606
+2024-04-03 13:09:52,828 INFO    MainThread:31606 [wandb_setup.py:_flush():68] Loading settings from /zhome/43/1/159866/.config/wandb/settings
+2024-04-03 13:09:52,828 INFO    MainThread:31606 [wandb_setup.py:_flush():68] Loading settings from /zhome/43/1/159866/PINN/MinMax/wandb/settings
+2024-04-03 13:09:52,828 INFO    MainThread:31606 [wandb_setup.py:_flush():68] Loading settings from environment variables: {'_require_service': 'True'}
+2024-04-03 13:09:52,828 INFO    MainThread:31606 [wandb_setup.py:_flush():68] Inferring run settings from compute environment: {'program_relpath': 'Run_verification_instance.py', 'program': '/zhome/43/1/159866/PINN/MinMax/Run_verification_instance.py'}
+2024-04-03 13:09:52,828 INFO    MainThread:31606 [wandb_init.py:_log_setup():478] Logging user logs to /zhome/43/1/159866/PINN/MinMax/wandb/offline-run-20240403_130952-f7upyuyp/logs/debug.log
+2024-04-03 13:09:52,828 INFO    MainThread:31606 [wandb_init.py:_log_setup():479] Logging internal logs to /zhome/43/1/159866/PINN/MinMax/wandb/offline-run-20240403_130952-f7upyuyp/logs/debug-internal.log
+2024-04-03 13:09:52,829 INFO    MainThread:31606 [wandb_init.py:init():518] calling init triggers
+2024-04-03 13:09:52,829 INFO    MainThread:31606 [wandb_init.py:init():521] wandb.init called with sweep_config: {}
+config: {'test_system': 2869, 'hidden_layer_size': 100, 'n_hidden_layers': 3, 'epochs': 100, 'batch_size': 1000, 'learning_rate': 0.001, 'lr_decay': 0.97, 'dataset_split_seed': 10, 'pytorch_init_seed': 3, 'PF_weight': 0.0001, 'Ver_type': 'GCP', 'Adverse_attack': 'Adverse_data_true', 'corelated_input': 'uncorrelated', 'Max_gcp_iter': 1, 'BigM_bound': 'MILP', 'Line_ID_max': 25, 'TimeLimit': 36000, 'callback': False, 'Algo': 'True', 'abc_method': 'IBP', 'ID': 'wtu3obnd'}
+2024-04-03 13:09:52,830 INFO    MainThread:31606 [wandb_init.py:init():571] starting backend
+2024-04-03 13:09:52,830 INFO    MainThread:31606 [wandb_init.py:init():575] setting up manager
+2024-04-03 13:09:52,836 INFO    MainThread:31606 [backend.py:_multiprocessing_setup():106] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2024-04-03 13:09:52,895 INFO    MainThread:31606 [wandb_init.py:init():582] backend started and connected
+2024-04-03 13:09:52,913 INFO    MainThread:31606 [wandb_init.py:init():670] updated telemetry
+2024-04-03 13:09:52,922 INFO    MainThread:31606 [wandb_init.py:init():758] starting run threads in backend
+2024-04-03 13:10:12,910 INFO    MainThread:31606 [wandb_run.py:_console_start():2101] atexit reg
+2024-04-03 13:10:12,914 INFO    MainThread:31606 [wandb_run.py:_redirect():1959] redirect: SettingsConsole.WRAP_RAW
+2024-04-03 13:10:12,914 INFO    MainThread:31606 [wandb_run.py:_redirect():2024] Wrapping output streams.
+2024-04-03 13:10:12,914 INFO    MainThread:31606 [wandb_run.py:_redirect():2046] Redirects installed.
+2024-04-03 13:10:12,915 INFO    MainThread:31606 [wandb_init.py:init():798] run started, returning control to user process
+2024-04-04 11:41:45,388 INFO    MainThread:31606 [wandb_run.py:_finish():1844] finishing run f7upyuyp
+2024-04-04 11:41:45,389 INFO    MainThread:31606 [wandb_run.py:_atexit_cleanup():2070] got exitcode: 0
+2024-04-04 11:41:45,391 INFO    MainThread:31606 [wandb_run.py:_restore():2053] restore
+2024-04-04 11:41:45,391 INFO    MainThread:31606 [wandb_run.py:_restore():2059] restore done
+2024-04-04 11:41:45,406 INFO    MainThread:31606 [wandb_run.py:_restore():2053] restore
+2024-04-04 11:41:45,406 INFO    MainThread:31606 [wandb_run.py:_restore():2059] restore done
+2024-04-04 11:41:46,465 ERROR   MainThread:31606 [wandb_run.py:_atexit_cleanup():2091] Problem finishing run
+Traceback (most recent call last):
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 2079, in _atexit_cleanup
+    self._on_finish()
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 2304, in _on_finish
+    self._footer_exit_status_info(
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 3224, in _footer_exit_status_info
+    printer.display(f'{" ".join(info)}')
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/sdk/lib/printer.py", line 68, in display
+    self._display(text, level=level, default_text=default_text)
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/sdk/lib/printer.py", line 152, in _display
+    self._display_fn_mapping(level)(text)
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/errors/term.py", line 39, in termlog
+    _log(
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/wandb/errors/term.py", line 95, in _log
+    click.echo(line, file=sys.stderr, nl=newline)
+  File "/zhome/43/1/159866/miniconda3/lib/python3.9/site-packages/click/utils.py", line 299, in echo
+    file.write(out)  # type: ignore
+OSError: [Errno 116] Stale file handle
