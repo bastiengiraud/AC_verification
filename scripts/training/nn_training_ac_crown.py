@@ -428,9 +428,7 @@ def fdlf_solver(Pg, Pd, Qd, Vm_nn, simulation_parameters, max_iter=100, tol=1e-3
             #print(torch.mean(dP, dim = 0))
         
         dP=torch.divide(dP,Vm[:, pv_pq_indices])
-
-        dP = torch.clamp(dP, min=-1, max=1)
-
+        dP = torch.clamp(dP, min=-0.5, max=0.5) # clip large dP updates for stabilization
         dDelta = torch.mm(Bp, dP.T).T   # (batch_size, n_bus-1)
 
         # Use dP and dQ norms as scale indicators
