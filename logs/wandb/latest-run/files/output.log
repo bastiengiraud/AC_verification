@@ -1,5 +1,0 @@
-BatchNorm1d may raise error during conversion when the model is in train() mode!
-Set model to eval() mode!
-Running on cpu
-/home/rnelli/MinMax/NN_Training_DC_Crown.py:329: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
-  x=torch.tensor(x.detach(), requires_grad=True).to(device)

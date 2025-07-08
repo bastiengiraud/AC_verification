@@ -1,1 +1,0 @@
-{"training_loss": 0.4937025308609009, "validation_loss": 0.4952237904071808, "Linear_PF_violation": 164.474609375, "epoch": 1999, "LP_time": 0.02588629722595215, "training_time": 0.1365375518798828, "_timestamp": 1712146898.9058793, "_runtime": 385.4606611728668, "_step": 1999, "_wandb": {"runtime": 384}}
