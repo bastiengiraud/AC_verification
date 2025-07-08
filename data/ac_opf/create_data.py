@@ -29,6 +29,7 @@ def create_data(simulation_parameters):
     n_buses=simulation_parameters['general']['n_buses'] 
     n_data_points = simulation_parameters['data_creation']['n_data_points']
     s_point = simulation_parameters['data_creation']['s_point']
+    nn_config = simulation_parameters['nn_output']
     
     # Get the absolute path to the folder containing this script
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -38,8 +39,8 @@ def create_data(simulation_parameters):
     output_dir = os.path.join(data_dir, f'Dataset')
     
     
-    L_Val = pd.read_csv(os.path.join(output_dir, 'NN_input.csv')).to_numpy()[s_point:s_point+n_data_points][:] 
-    Gen_out = pd.read_csv(os.path.join(output_dir, 'NN_output.csv')).to_numpy()[s_point:s_point+n_data_points][:]
+    L_Val = pd.read_csv(os.path.join(output_dir, f'NN_input_{nn_config}.csv')).to_numpy()[s_point:s_point+n_data_points][:] 
+    Gen_out = pd.read_csv(os.path.join(output_dir, f'NN_output_{nn_config}.csv')).to_numpy()[s_point:s_point+n_data_points][:]
     
     #L_Val=pd.read_csv('verify-powerflow/dc_opf_data/'+str(n_buses)+'/NN_input_actual.csv').to_numpy()[s_point:s_point+n_data_points][:] 
     #Gen_out = pd.read_csv('verify-powerflow/dc_opf_data/'+str(n_buses)+'/NN_output_actual.csv').to_numpy()[s_point:s_point+n_data_points][:]
@@ -55,6 +56,7 @@ def create_test_data(simulation_parameters):
     n_data_points = simulation_parameters['data_creation']['n_data_points']
     s_point = simulation_parameters['data_creation']['s_point']
     n_total = n_data_points + n_test_data_points
+    nn_config = simulation_parameters['nn_output']
     
     # Get the absolute path to the folder containing this script
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,8 +66,8 @@ def create_test_data(simulation_parameters):
     output_dir = os.path.join(data_dir, f'Dataset')
     
 
-    L_Val = pd.read_csv(os.path.join(output_dir, 'NN_input.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
-    Gen_out = pd.read_csv(os.path.join(output_dir, 'NN_output.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
+    L_Val = pd.read_csv(os.path.join(output_dir, 'NN_input_{nn_config}.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
+    Gen_out = pd.read_csv(os.path.join(output_dir, 'NN_output_{nn_config}.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
     
     #L_Val=pd.read_csv('verify-powerflow/dc_opf_data/'+str(n_buses)+'/NN_input_actual.csv').to_numpy()[s_point+n_data_points:s_point+n_total][:]
     #Gen_out = pd.read_csv('verify-powerflow/dc_opf_data/'+str(n_buses)+'/NN_output_actual.csv').to_numpy()[s_point+n_data_points:s_point+n_total][:]
@@ -98,7 +100,7 @@ def generate_power_system_data(simulation_parameters):
     # ============= specify pglib-opf case based on n_buses ==================
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   
     
-    combination = "pg_qg"
+    combination = simulation_parameters['nn_output']
     
     if n_buses == 118:
         case_name = 'pglib_opf_case118_ieee.m'

@@ -412,7 +412,7 @@ def create_example_parameters(n_buses: int):
     simulation_parameters = {'true_system': true_system_parameters,
                              'general': general_parameters,
                              'data_creation': data_creation_parameters,
-                             'net_object': ppc # Optionally, pass the net object itself if other functions need it
-                             }
+                             'net_object': ppc, # Optionally, pass the net object itself if other functions need it
+                             'nn_output': 'pg_qg'}
 
     return simulation_parameters

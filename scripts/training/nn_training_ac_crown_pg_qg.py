@@ -190,12 +190,12 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
     # get limits
     pg_max_values = torch.tensor(simulation_parameters['true_system']['Sg_max'], dtype=torch.float64, device=device, requires_grad=False)[:n_gens] / 100 
     pg_min_values = torch.zeros_like(pg_max_values, requires_grad=False)
-    vm_min_values = torch.tensor(simulation_parameters['true_system']['Volt_min'], dtype=torch.float64, device=device).unsqueeze(1)
-    vm_max_values = torch.tensor(simulation_parameters['true_system']['Volt_max'], dtype=torch.float64, device=device).unsqueeze(1)
+    qg_max_values = torch.tensor(simulation_parameters['true_system']['Sg_max'], dtype=torch.float64, device=device, requires_grad=False)[n_gens:] / 100 
+    qg_min_values = torch.tensor(simulation_parameters['true_system']['Sg_max'], dtype=torch.float64, device=device, requires_grad=False)[n_gens:] / 100 
     
     # placeholder for Pg, and fill in with NN prediction
     Pg_place = torch.zeros((config.batch_size, n_gens), dtype=torch.float64, device=device, requires_grad=True)
-    Vm_nn_place = torch.zeros((config.batch_size, n_bus), dtype=torch.float64, device=device, requires_grad=True)
+    Qg_place = torch.zeros((config.batch_size, n_gens), dtype=torch.float64, device=device, requires_grad=True)
     
     # Add a small epsilon to denominators if you want (optional, but you had it for stability)
     eps = 1e-6
@@ -203,9 +203,9 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
     pg_min_values = pg_min_values - eps
     pg_denominator = pg_max_values - pg_min_values
 
-    vm_max_values = vm_max_values + eps
-    vm_min_values = vm_min_values - eps
-    vm_denominator = vm_max_values - vm_min_values
+    qg_max_values = qg_max_values + eps
+    qg_min_values = qg_min_values - eps
+    qg_denominator = qg_max_values - qg_min_values
     
     # get indices of active gens and pv buses
     act_gen_indices = simulation_parameters['true_system']['pg_active']
@@ -226,13 +226,13 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
         Pg = Pg_place.clone()
         Pg[:, act_gen_indices] = Pg_active.to(dtype=torch.float64)
         
-        Vm_nn_g = Gen_output[:, n_act_gens:] 
-        Vm_nn = Vm_nn_place.clone()
-        Vm_nn[:, pv_indices] = Vm_nn_g.to(dtype=torch.float64)
+        Qg_active = Gen_output[:, :n_act_gens] 
+        Qg = Qg_place.clone()
+        Qg[:, act_gen_indices] = Qg_active.to(dtype=torch.float64)
         
         # Inverse scaling of all states
         Pg = Pg * pg_denominator.T + pg_min_values.T  # shape (batch_size, n_gens)
-        Vm_nn = Vm_nn * vm_denominator.T + vm_min_values.T  # shape (batch_size, n_bus)
+        Qg = Qg * qg_denominator.T + qg_min_values.T  # shape (batch_size, n_gens)
         
         # # true labeled gen output
         # Pg_active_true = Gen_target[:, :n_act_gens] 
@@ -246,9 +246,9 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
             torch.mean(RELU(Pg - pg_max_values.T) ** 2) +
             torch.mean((RELU(0 - Pg)) ** 2)
         )
-        violation_vm = config.vm_viol_weight * (                                                   # voltage limit violation penatly   
-            torch.mean(RELU(Vm_nn - vm_max_values.T) ** 2) +
-            torch.mean(RELU(vm_min_values.T - Vm_nn) ** 2)
+        violation_qg = config.qg_viol_weight * (                                                   # generator limit violation penatly   
+            torch.mean(RELU(Qg - qg_max_values.T) ** 2) +
+            torch.mean((RELU(qg_min_values - Qg)) ** 2)
         )
         
         
@@ -258,7 +258,7 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
         else:
             PF_loss = 0
 
-        total_loss = loss_gen + violation_pg + violation_vm + PF_loss
+        total_loss = loss_gen + violation_pg + violation_qg + PF_loss
 
         total_loss.backward()
         optimizer.step()

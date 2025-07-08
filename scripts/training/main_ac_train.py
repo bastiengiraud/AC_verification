@@ -14,6 +14,7 @@ def create_config():
         'dataset_split_seed': 10,
         'pytorch_init_seed': 3,
         'pg_viol_weight': 0,
+        'qg_viol_weight': 0,
         'vm_viol_weight': 0,
         'crit_weight': 1e4,
         'PF_weight': 1e-4,
