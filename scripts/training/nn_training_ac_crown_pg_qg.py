@@ -248,7 +248,7 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
         )
         violation_qg = config.qg_viol_weight * (                                                   # generator limit violation penatly   
             torch.mean(RELU(Qg - qg_max_values.T) ** 2) +
-            torch.mean((RELU(qg_min_values - Qg)) ** 2)
+            torch.mean((RELU(qg_min_values.T - Qg)) ** 2)
         )
         
         

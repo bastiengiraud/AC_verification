@@ -399,8 +399,8 @@ def create_example_parameters(n_buses: int):
     # -----------------------------------------------------------------------------------------------
     # Parameters for data creation
     # -----------------------------------------------------------------------------------------------
-    n_data_points = 5_000
-    n_test_data_points = 2_000
+    n_data_points = 4_000
+    n_test_data_points = 1_000
 
     data_creation_parameters = {'n_data_points': n_data_points,
                                 'n_test_data_points': n_test_data_points,
@@ -413,6 +413,6 @@ def create_example_parameters(n_buses: int):
                              'general': general_parameters,
                              'data_creation': data_creation_parameters,
                              'net_object': ppc, # Optionally, pass the net object itself if other functions need it
-                             'nn_output': 'pg_qg'}
+                             'nn_output': 'surrogate'} # 'pg_vm', 'pg_qg', 'surrogate'
 
     return simulation_parameters

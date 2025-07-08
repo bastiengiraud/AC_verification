@@ -52,6 +52,8 @@ def main():
         from nn_training_ac_crown_pg_vm import train
     elif nn_config == 'pg_qg':
         from nn_training_ac_crown_pg_qg import train
+    elif nn_config == 'surrogate':
+        from nn_training_surrogate import train
     else:
         print("Training paradigm not recognized.")
     

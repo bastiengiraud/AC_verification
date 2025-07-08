@@ -66,8 +66,8 @@ def create_test_data(simulation_parameters):
     output_dir = os.path.join(data_dir, f'Dataset')
     
 
-    L_Val = pd.read_csv(os.path.join(output_dir, 'NN_input_{nn_config}.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
-    Gen_out = pd.read_csv(os.path.join(output_dir, 'NN_output_{nn_config}.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
+    L_Val = pd.read_csv(os.path.join(output_dir, f'NN_input_{nn_config}.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
+    Gen_out = pd.read_csv(os.path.join(output_dir, f'NN_output_{nn_config}.csv')).to_numpy()[s_point+n_data_points:s_point+n_total][:]
     
     #L_Val=pd.read_csv('verify-powerflow/dc_opf_data/'+str(n_buses)+'/NN_input_actual.csv').to_numpy()[s_point+n_data_points:s_point+n_total][:]
     #Gen_out = pd.read_csv('verify-powerflow/dc_opf_data/'+str(n_buses)+'/NN_output_actual.csv').to_numpy()[s_point+n_data_points:s_point+n_total][:]
@@ -78,7 +78,7 @@ def create_test_data(simulation_parameters):
 
 import cvxpy as cp
 
-def generate_power_system_data(simulation_parameters):
+def generate_power_system_data(simulation_parameters, save_csv=True):
     
     """ 
     Generates training data for AC OPF by simulating various load profiles,
@@ -325,8 +325,9 @@ def generate_power_system_data(simulation_parameters):
     input_filename = os.path.join(output_data_dir, f"NN_input_{combination}.csv")
     output_filename = os.path.join(output_data_dir, f"NN_output_{combination}.csv")
 
-    pd.DataFrame(X_nn_input).to_csv(input_filename, index=False, header=False)
-    pd.DataFrame(Y_nn_output).to_csv(output_filename, index=False, header=False)
+    if save_csv:
+        pd.DataFrame(X_nn_input).to_csv(input_filename, index=False, header=False)
+        pd.DataFrame(Y_nn_output).to_csv(output_filename, index=False, header=False)
 
     print("Data generation and saving complete.")
     print(f"NN Input shape (for CSV): {X_nn_input.shape}")
@@ -362,14 +363,3 @@ if __name__ == "__main__":
         print(f"Scaled Load Profiles (X_train_data): {X_train_data.shape}")
         print(f"Generator Dispatches (Y_train_data): {Y_train_data.shape}")
 
-        # Optional: Save generated data to CSV
-        output_dir = os.path.join(param_data_dir, f'Dataset')
-        
-        # Saving with header=False and index=False as per your original load function
-        pd.DataFrame(X_train_data).to_csv(os.path.join(output_dir, "NN_input.csv"), index=False, header=False)
-        pd.DataFrame(Y_train_data).to_csv(os.path.join(output_dir, "NN_output.csv"), index=False, header=False)
-        print(f"\nGenerated data saved to {output_dir}/NN_input.csv and NN_output.csv")
-        print("\nExample Scaled Load Profile:")
-        print(X_train_data[0])
-        print("\nExample Generator Dispatch:")
-        print(Y_train_data[0])
