@@ -399,7 +399,7 @@ def create_example_parameters(n_buses: int):
     # -----------------------------------------------------------------------------------------------
     # Parameters for data creation
     # -----------------------------------------------------------------------------------------------
-    n_data_points = 8_000
+    n_data_points = 5_000
     n_test_data_points = 2_000
 
     data_creation_parameters = {'n_data_points': n_data_points,

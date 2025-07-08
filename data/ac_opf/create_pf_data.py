@@ -98,8 +98,6 @@ def generate_power_system_data(simulation_parameters):
     # ============= specify pglib-opf case based on n_buses ==================
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))   
     
-    combination = "pg_qg"
-    
     if n_buses == 118:
         case_name = 'pglib_opf_case118_ieee.m'
     elif n_buses == 300:
@@ -130,9 +128,6 @@ def generate_power_system_data(simulation_parameters):
     # Extract min/max Pg per generator:
     pg_min_values = base_ppc['gen'][:, 9].reshape((n_gens, 1))  # PMIN (column 9)
     pg_max_values = base_ppc['gen'][:, 8].reshape((n_gens, 1))  # PMAX (column 8)
-    
-    qg_min_values = base_ppc['gen'][:, 4].reshape((n_gens, 1))  # QMIN (column 4)
-    qg_max_values = base_ppc['gen'][:, 3].reshape((n_gens, 1))  # QMAX (column 3)
 
     # Extract min/max Vm per bus:
     vm_min_values = base_ppc['bus'][:, 11].reshape((n_bus, 1))  # VMIN
@@ -180,7 +175,6 @@ def generate_power_system_data(simulation_parameters):
 
     # --- Output Collection (for NN labels) ---
     pg_tot = torch.zeros(n_gens, int(n_data_points), dtype=torch.float32)
-    qg_tot = torch.zeros(n_gens, int(n_data_points), dtype=torch.float32)
     vm_tot = torch.zeros(n_bus, int(n_data_points), dtype=torch.float32)
     
     # -------------------------------------------------------------
@@ -228,30 +222,25 @@ def generate_power_system_data(simulation_parameters):
         except Exception:
             print(f"Warning: PYPOWER OPF failed for entry {entry}. Error. Skipping this sample.")
             pg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
-            qg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
             vm_tot[:, entry] = torch.zeros(n_bus, dtype=torch.float32)
             continue
         
         # Store results if OPF converged
         if success: # PYPOWER's runopf returns True for success
             pg_tot[:, entry] = torch.tensor(results['gen'][:, PG], dtype=torch.float32)
-            qg_tot[:, entry] = torch.tensor(results['gen'][:, QG], dtype=torch.float32)
             vm_tot[:, entry] = torch.tensor(results['bus'][:, VM], dtype=torch.float32)
 
         else:
             print(f"Warning: PYPOWER OPF did not converge for entry {entry}. Storing zeros.")
             pg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
-            qg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
             vm_tot[:, entry] = torch.zeros(n_bus, dtype=torch.float32)
 
     # Obtain labels (NN output)
     pg_np = pg_tot.numpy()
-    qg_np = qg_tot.numpy()
     vm_np = vm_tot.numpy()
     
     # Step 1: Identify generators with pg_max == 0
     pg_max_zero_mask = pg_max_values.flatten() < 1e-9  # shape: (n_gens,)
-    qg_max_zero_mask = qg_max_values.flatten() < 1e-9  # shape: (n_gens,)
     slack_bus_indices = np.where(base_ppc['bus'][:, 1] == 3)[0]  # BUS_TYPE == 3 (slack)
     slack_gen_mask = np.isin(base_ppc['gen'][:, 0], slack_bus_indices)  # shape: (n_gens,)
 
@@ -260,17 +249,9 @@ def generate_power_system_data(simulation_parameters):
     gen_mask_to_keep = ~gen_mask_to_remove  # invert mask to keep desired generators
     pg_np = pg_np[gen_mask_to_keep, :]
     
-    # remove generator where qg_max = 0 and slack bus
-    qgen_mask_to_remove = np.logical_or(qg_max_zero_mask, slack_gen_mask)  # shape: (n_gens,)
-    qgen_mask_to_keep = ~qgen_mask_to_remove  # invert mask to keep desired generators
-    qg_np = qg_np[qgen_mask_to_keep, :]
-    
     # remove from min max values as well
     pg_min_values = pg_min_values[gen_mask_to_keep, :]
     pg_max_values = pg_max_values[gen_mask_to_keep, :]
-    
-    qg_min_values = qg_min_values[qgen_mask_to_keep, :]
-    qg_max_values = qg_max_values[qgen_mask_to_keep, :]
     
     # only keep voltages at generators:
     gen_bus_indices = base_ppc['gen'][:, 0].astype(int)  # buses with generators
@@ -287,27 +268,15 @@ def generate_power_system_data(simulation_parameters):
     pg_min_values -= 1e-6
     pg_denominator = np.where(pg_max_values - pg_min_values == 0, 1, pg_max_values - pg_min_values)
     pg_scaled = (pg_np - pg_min_values) / pg_denominator
-    
-    qg_max_values += 1e-6 # avoid numerical instability for very small min and max values
-    qg_min_values -= 1e-6
-    qg_denominator = np.where(qg_max_values - qg_min_values == 0, 1, qg_max_values - qg_min_values)
-    qg_scaled = (qg_np - qg_min_values) / qg_denominator
 
     vm_max_values += 1e-6
     vm_min_values -= 1e-6
     vm_denominator = np.where(vm_max_values - vm_min_values == 0, 1, vm_max_values - vm_min_values)
     vm_scaled = (vm_np - vm_min_values) / vm_denominator
     
-    if combination == "pg_vm":
-        # Combine scaled outputs
-        y_scaled = np.vstack([pg_scaled, vm_scaled])
-        Y_nn_output = y_scaled.T  # transpose to (n_data_points, features)
-    elif combination == "pg_qg":
-        # Combine scaled outputs
-        y_scaled = np.vstack([pg_scaled, qg_scaled])
-        Y_nn_output = y_scaled.T  # transpose to (n_data_points, features)
-    else:
-        print("Combination not recognized")
+    # Combine scaled outputs
+    y_scaled = np.vstack([pg_scaled, vm_scaled])
+    Y_nn_output = y_scaled.T  # transpose to (n_data_points, features)
 
     # --- Save to CSV Files ---
     output_data_dir = os.path.join(
@@ -320,8 +289,8 @@ def generate_power_system_data(simulation_parameters):
     os.makedirs(output_data_dir, exist_ok=True)
     print(f"Saving generated data to: {output_data_dir}")
 
-    input_filename = os.path.join(output_data_dir, f"NN_input_{combination}.csv")
-    output_filename = os.path.join(output_data_dir, f"NN_output_{combination}.csv")
+    input_filename = os.path.join(output_data_dir, "NN_input.csv")
+    output_filename = os.path.join(output_data_dir, "NN_output.csv")
 
     pd.DataFrame(X_nn_input).to_csv(input_filename, index=False, header=False)
     pd.DataFrame(Y_nn_output).to_csv(output_filename, index=False, header=False)

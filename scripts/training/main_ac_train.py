@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from nn_training_ac_crown import train
+from nn_training_ac_crown_pg_vm import train
 
 
 def create_config():
