@@ -18,7 +18,7 @@ from ac_opf.create_data import create_data, create_test_data
 from EarlyStopping import EarlyStopping
 from auto_LiRPA import BoundedModule, BoundedTensor
 from auto_LiRPA.perturbations import PerturbationLpNorm
-from neural_network.lightning_nn_surrogate import NeuralNetwork
+from neural_network.lightning_nn_crown import NeuralNetwork
 # from LiRPANet import LiRPANet
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,49 +31,56 @@ def train(config):
     simulation_parameters = create_example_parameters(n_buses)
 
     # Training Data
-    inj_train, vrvi_train = create_data(simulation_parameters=simulation_parameters)
-    inj_train = torch.tensor(inj_train).float().to(device)
+    sd_train, vrvi_train = create_data(simulation_parameters=simulation_parameters)
+    sd_train = torch.tensor(sd_train).float().to(device)
     vrvi_train = torch.tensor(vrvi_train).float().to(device)
-    Gen_train_typ = torch.ones(vrvi_train.shape[0], 1).to(device)
+    vrvi_train_typ = torch.ones(vrvi_train.shape[0], 1).to(device)
 
     num_classes = vrvi_train.shape[1]
-    _, inj_min, inj_max = min_max_scale_tensor(inj_train)
-    inj_delta = inj_max - inj_min
-    inj_delta[inj_delta <= 1e-12] = 1.0  # Safeguard
-
+    sd_min = simulation_parameters['true_system']['Sd_min']
+    sd_delta = simulation_parameters['true_system']['Sd_delta']
+    
     _, vrvi_min, vrvi_max = min_max_scale_tensor(vrvi_train)
     vrvi_delta = vrvi_max - vrvi_min
     vrvi_delta[vrvi_delta <= 1e-12] = 1.0
 
     data_stat = {
-        'inj_min': inj_min,
-        'inj_delta': inj_delta,
+        'sd_min': sd_min,
+        'sd_delta': sd_delta,
         'vrvi_min': vrvi_min,
         'vrvi_delta': vrvi_delta,
     }
 
-
     # Test Data
-    inj_test, vrvi_test = create_test_data(simulation_parameters=simulation_parameters)
-    inj_test = torch.tensor(inj_test).float().to(device)
+    sd_test, vrvi_test = create_test_data(simulation_parameters=simulation_parameters)
+    sd_test = torch.tensor(sd_test).float().to(device)
     vrvi_test = torch.tensor(vrvi_test).float().to(device)
 
-    network_gen = build_network(inj_train.shape[1], num_classes, config.hidden_layer_size,
+    network_gen = build_network(sd_train.shape[1], num_classes, config.hidden_layer_size,
                                 config.n_hidden_layers, config.pytorch_init_seed)
-    network_gen = normalise_network(network_gen, inj_train, data_stat) # data is already normalized
+    network_gen = normalise_network(network_gen, sd_train, data_stat) 
+
+    # Convert NN to lirpa_model that can calculate bounds on output
+    lirpa_model = BoundedModule(network_gen, torch.empty_like(sd_train), device=device) 
+    print('Running on', device)
+
+    x = sd_min.reshape(1, -1) + sd_delta.reshape(1, -1) / 2
+    x = torch.tensor(x).float().to(device)
+    x_min = torch.tensor(sd_min.reshape(1, -1)).float().to(device)
+    x_max = torch.tensor(sd_min.reshape(1, -1) + sd_delta.reshape(1, -1)).float().to(device)
+    
+    # set up input specificiation. Define upper and lower bound. Boundedtensor wraps nominal input(x) and associates it with defined perturbation ptb.
+    ptb = PerturbationLpNorm(x_L=x_min, x_U=x_max)
+    image = BoundedTensor(x, ptb).to(device)
 
     optimizer = torch.optim.Adam(network_gen.parameters(), lr=config.learning_rate)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: (epoch + 1) ** -config.lr_decay)
 
     project_root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    model_save_directory = os.path.join(project_root_dir, 'models', 'surrogate')
-    
-    # ✅ Create the directory if it doesn't exist
-    os.makedirs(model_save_directory, exist_ok=True)
-
-    path = f'checkpoint_surrogate_{n_buses}_{config.hidden_layer_size}_{config.Algo}.pt'
+    model_save_directory = os.path.join(project_root_dir, 'models', 'best_model')
+    path = f'checkpoint_{n_buses}_{config.hidden_layer_size}_{config.Algo}.pt'
     path_dir = os.path.join(model_save_directory, path)
-    early_stopping = EarlyStopping(patience=100, verbose=False, NN_input=inj_train, path=path_dir)
+    early_stopping = EarlyStopping(patience=100, verbose=False, NN_input=sd_train, path=path_dir)
 
     train_losses = []
     test_losses = []
@@ -81,20 +88,20 @@ def train(config):
     for epoch in range(config.epochs):
         # after every 100 epochs, enrich dataset with worst-case data
         if epoch % 100 == 0 and epoch != 0 and config.Enrich:
-            X, Y, typ = wc_enriching(network_gen, config, inj_train, data_stat)
-            InputNN = torch.cat((inj_train, X), 0).to(device)
+            X, Y, typ = wc_enriching(network_gen, config, sd_train, data_stat)
+            InputNN = torch.cat((sd_train, X), 0).to(device)
             OutputNN = torch.cat((vrvi_train, Y), 0).to(device)
-            typNN = torch.cat((Gen_train_typ, typ), 0).to(device)
+            typNN = torch.cat((vrvi_train_typ, typ), 0).to(device)
             idx = torch.randperm(InputNN.shape[0])
             InputNN, OutputNN, typNN = InputNN[idx], OutputNN[idx], typNN[idx]
         else:
-            InputNN = inj_train
+            InputNN = sd_train
             OutputNN = vrvi_train
-            typNN = Gen_train_typ
+            typNN = vrvi_train_typ
 
         start_time = time.time()
         mse_criterion, training_loss = train_epoch(network_gen, InputNN, OutputNN, typNN, optimizer, config, simulation_parameters, epoch)
-        validation_loss = validate_epoch(network_gen, inj_test, vrvi_test)
+        validation_loss = validate_epoch(network_gen, sd_test, vrvi_test)
         training_time = time.time() - start_time
         
         if epoch % 20 == 0 and epoch != 0:
@@ -155,14 +162,14 @@ def build_network(n_input_neurons, n_output_neurons, hidden_layer_size, n_hidden
     return model.to(device)
 
 
-def normalise_network(model, Dem_train, data_stat):
-    inj_min = data_stat['inj_min']
-    inj_delta = data_stat['inj_delta']
+def normalise_network(model, sd_train, data_stat):
+    sd_min = data_stat['sd_min']
+    sd_delta = data_stat['sd_delta']
     vrvi_min = data_stat['vrvi_min']
     vrvi_delta = data_stat['vrvi_delta']
 
-    input_stats = (torch.from_numpy(inj_min.reshape(-1,).astype(np.float64)),
-                   torch.from_numpy(inj_delta.reshape(-1,).astype(np.float64)))
+    input_stats = (torch.from_numpy(sd_min.reshape(-1,).astype(np.float64)),
+                   torch.from_numpy(sd_delta.reshape(-1,).astype(np.float64)))
     output_stats = (torch.from_numpy(vrvi_min.reshape(-1,).astype(np.float64)),
                    torch.from_numpy(vrvi_delta.reshape(-1,).astype(np.float64)))
 
@@ -171,29 +178,26 @@ def normalise_network(model, Dem_train, data_stat):
     return model.to(device)
 
 
-
-
-def validate_epoch(network_gen, Dem_test, Gen_test):
+def validate_epoch(network_gen, sd_test, vrvi_test):
     criterion = nn.MSELoss()
-    output = network_gen.forward_train(Dem_test)
-    return criterion(output, Gen_test)
+    output = network_gen.forward_train(sd_test)
+    return criterion(output, vrvi_test)
 
 
-def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simulation_parameters, epoch):
+def train_epoch(network_gen, sd_train, vrvi_train, typ, optimizer, config, simulation_parameters, epoch):
     torch.autograd.set_detect_anomaly(True)
 
     network_gen.train()
     criterion = nn.MSELoss()
     get_slice = lambda i, size: range(i * size, (i + 1) * size)
-    num_samples = Dem_train.shape[0]
+    num_samples = sd_train.shape[0]
     num_batches = num_samples // config.batch_size
     Gen_delta = simulation_parameters['true_system']['Sg_delta']
     n_gens = simulation_parameters['general']['n_gbus']
-    n_loads = Dem_train.shape[1]
+    n_loads = sd_train.shape[1]
     n_bus = simulation_parameters['general']['n_buses']
     RELU = nn.ReLU()
     loss_sum = 0
-    
  
     preds = []
     targets = []
@@ -201,8 +205,8 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
     for i in range(num_batches):
         optimizer.zero_grad()
         slce = get_slice(i, config.batch_size)
-        Gen_output = network_gen.forward_train(Dem_train[slce])
-        Gen_target = Gen_train[slce]
+        Gen_output = network_gen.forward_train(sd_train[slce])
+        Gen_target = vrvi_train[slce]
         
         
         mse_criterion = criterion(Gen_output * typ[slce], Gen_target * typ[slce])
@@ -229,18 +233,18 @@ convex relaxation of the OP for power flow.
 
 
 
-def wc_enriching(network_gen, config, Dem_train, Data_stat):
+def wc_enriching(network_gen, config, sd_train, data_stat):
     n_adver = config.N_enrich
 
     # Forward pass to get generator outputs (Pg and Vm stacked)
-    nn_output = network_gen.forward_aft(Dem_train).cpu().detach().numpy()
+    nn_output = network_gen.forward_aft(sd_train).cpu().detach().numpy()
     
-    n_gens = Data_stat['Gen_delta'].shape[0] // 2 
-    n_loads = Dem_train.shape[1] // 2  # Pd and Qd stacked, so loads = half of input features
+    n_gens = data_stat['Gen_delta'].shape[0] // 2 
+    n_loads = sd_train.shape[1] // 2  # Pd and Qd stacked, so loads = half of input features
 
     # Split loads into Pd and Qd
     P_gen = nn_output[:, :n_gens]
-    P_load = Dem_train[:, :n_loads].cpu().numpy()  # shape (n_loads, n_samples)
+    P_load = sd_train[:, :n_loads].cpu().numpy()  # shape (n_loads, n_samples)
 
     # Only consider active power balance violation (Pg - Pd)
     # Sum over generators and loads per sample (axis=0)
@@ -248,11 +252,11 @@ def wc_enriching(network_gen, config, Dem_train, Data_stat):
 
     # Find indices with largest positive violations (overgeneration)
     ind_p = np.argpartition(PB_P, -n_adver // 2)[-n_adver // 2:]
-    adv_p = GradAscnt(network_gen, Dem_train[ind_p, :].cpu().numpy(), Data_stat, sign=1)
+    adv_p = GradAscnt(network_gen, sd_train[ind_p, :].cpu().numpy(), data_stat, sign=1)
 
     # Find indices with largest negative violations (undergeneration)
     ind_n = np.argpartition(-PB_P, -n_adver // 2)[-n_adver // 2:]
-    adv_n = GradAscnt(network_gen, Dem_train[ind_n, :].cpu().numpy(), Data_stat, sign=-1)
+    adv_n = GradAscnt(network_gen, sd_train[ind_n, :].cpu().numpy(), data_stat, sign=-1)
 
     x_g = torch.tensor(np.concatenate([adv_n, adv_p], axis=0)).float()  # concatenate on sample axis
     y_g = torch.zeros(x_g.shape[0], nn_output.shape[1])
@@ -264,7 +268,7 @@ def wc_enriching(network_gen, config, Dem_train, Data_stat):
 
 
 
-def GradAscnt(Network, x_starting, Data_stat, sign=-1, Num_iteration=100, lr=0.0001):
+def GradAscnt(Network, x_starting, data_stat, sign=-1, Num_iteration=100, lr=0.0001):
     '''
     x_starting: Starting points for gradient ascent (shape: features x batch_size)
     sign: 1 to increase violation, -1 to decrease violation
@@ -272,7 +276,7 @@ def GradAscnt(Network, x_starting, Data_stat, sign=-1, Num_iteration=100, lr=0.0
     x = torch.tensor(x_starting, requires_grad=True).float()
     optimizer = torch.optim.SGD([x], lr=lr)
 
-    n_gens = Data_stat['Gen_delta'].shape[0] // 2 
+    n_gens = data_stat['Gen_delta'].shape[0] // 2 
     n_loads = x.shape[1] // 2
 
     for _ in range(Num_iteration):
@@ -325,18 +329,18 @@ def GradAscnt(Network, x_starting, Data_stat, sign=-1, Num_iteration=100, lr=0.0
 
 
 
-# def wc_enriching(network_gen, config, Dem_train, Data_stat):
+# def wc_enriching(network_gen, config, sd_train, data_stat):
 #     n_adver = config.N_enrich
-#     Gen_output = network_gen.forward_aft(Dem_train).cpu().detach().numpy() # forward pass with clamping
-#     PB = np.sum(Gen_output, axis=1) - np.sum(Dem_train.cpu().numpy(), axis=1) # power balance violation
+#     Gen_output = network_gen.forward_aft(sd_train).cpu().detach().numpy() # forward pass with clamping
+#     PB = np.sum(Gen_output, axis=1) - np.sum(sd_train.cpu().numpy(), axis=1) # power balance violation
     
 #     # over generation - positive gradient ascent samples
 #     ind_p = np.argpartition(PB, -4)[-n_adver // 2:] # identify 'n_adver' indices with worst-case violation
-#     adv_p = GradAscnt(network_gen, Dem_train[ind_p].cpu().numpy(), Data_stat, sign=1)
+#     adv_p = GradAscnt(network_gen, sd_train[ind_p].cpu().numpy(), data_stat, sign=1)
     
 #     # under generation - negative gradient descent samples
 #     ind_n = np.argpartition(-PB, -4)[-n_adver // 2:]
-#     adv_n = GradAscnt(network_gen, Dem_train[ind_n].cpu().numpy(), Data_stat)
+#     adv_n = GradAscnt(network_gen, sd_train[ind_n].cpu().numpy(), data_stat)
 #     x_g = torch.tensor(np.concatenate([adv_n, adv_p], axis=0)).float()
 #     y_g = torch.zeros(x_g.shape[0], Gen_output.shape[1])
 #     y_type = torch.zeros(x_g.shape[0], 1)
@@ -345,7 +349,7 @@ def GradAscnt(Network, x_starting, Data_stat, sign=-1, Num_iteration=100, lr=0.0
 
 
 
-# def GradAscnt(Network, x_starting, Data_stat, sign=-1, Num_iteration=100, lr=0.0001):
+# def GradAscnt(Network, x_starting, data_stat, sign=-1, Num_iteration=100, lr=0.0001):
 #     '''
 #     x_starting: Starting points for the gradient ascent algorithm
 #     x_min,x_max :  Minimum and maximum value of x ( default is 0 and 1)

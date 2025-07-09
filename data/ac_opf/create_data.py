@@ -11,6 +11,7 @@ from pypower.idx_bus import PD, QD, BUS_I, VM, VA, BUS_TYPE
 from pypower.idx_gen import PG, QG, GEN_BUS
 from pypower.idx_brch import F_BUS, T_BUS
 from pypower.ppoption import ppoption
+from pypower.makeYbus import makeYbus
 import torch
 import copy
 
@@ -122,6 +123,7 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
     # Run OPF
     ppopt = ppoption(OUT_ALL=0)
     results = runopf(base_ppc, ppopt)
+    Ybus, _, _ = makeYbus(base_ppc['baseMVA'], base_ppc['bus'], base_ppc['branch'])
 
     # Net data
     Sbase = base_ppc['baseMVA'] # Sbase from PYPOWER case
@@ -185,6 +187,11 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
     qg_tot = torch.zeros(n_gens, int(n_data_points), dtype=torch.float32)
     vm_tot = torch.zeros(n_bus, int(n_data_points), dtype=torch.float32)
     
+    pinj_tot = torch.zeros(n_bus, int(n_data_points), dtype=torch.float32)
+    qinj_tot = torch.zeros(n_bus, int(n_data_points), dtype=torch.float32)
+    vr_tot = torch.zeros(n_bus, int(n_data_points), dtype=torch.float32)
+    vi_tot = torch.zeros(n_bus, int(n_data_points), dtype=torch.float32)
+    
     # -------------------------------------------------------------
     
     # Get the internal PYPOWER case from the pandapower network
@@ -232,6 +239,11 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
             pg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
             qg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
             vm_tot[:, entry] = torch.zeros(n_bus, dtype=torch.float32)
+            
+            pinj_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
+            qinj_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
+            vr_tot[:, entry] = torch.zeros(n_bus, dtype=torch.float32)
+            vi_tot[:, entry] = torch.zeros(n_bus, dtype=torch.float32)
             continue
         
         # Store results if OPF converged
@@ -239,19 +251,34 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
             pg_tot[:, entry] = torch.tensor(results['gen'][:, PG], dtype=torch.float32)
             qg_tot[:, entry] = torch.tensor(results['gen'][:, QG], dtype=torch.float32)
             vm_tot[:, entry] = torch.tensor(results['bus'][:, VM], dtype=torch.float32)
+            
+            vm = results['bus'][:, VM]
+            va_rad = np.deg2rad(results['bus'][:, VA])
+            vr = vm * np.cos(va_rad)
+            vi = vm * np.sin(va_rad)
+            
+            V = results['bus'][:, VM] * np.exp(1j * np.deg2rad(results['bus'][:, VA]))  # voltage in complex form
+            I = Ybus @ V
+            S = V * np.conj(I)
+            
+            pinj_tot[:, entry] = torch.tensor(np.real(S), dtype=torch.float32)
+            qinj_tot[:, entry] = torch.tensor(np.imag(S), dtype=torch.float32)
+            vr_tot[:, entry] = torch.tensor(vr, dtype=torch.float32)
+            vi_tot[:, entry] = torch.tensor(vi, dtype=torch.float32)
 
         else:
             print(f"Warning: PYPOWER OPF did not converge for entry {entry}. Storing zeros.")
-            pg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
-            qg_tot[:, entry] = torch.zeros(n_gens, dtype=torch.float32)
-            vm_tot[:, entry] = torch.zeros(n_bus, dtype=torch.float32)
+
 
     # Obtain labels (NN output)
     pg_np = pg_tot.numpy()
     qg_np = qg_tot.numpy()
     vm_np = vm_tot.numpy()
     
-    # Step 1: Identify generators with pg_max == 0
+    vr_tot = vr_tot.numpy()
+    vi_tot = vi_tot.numpy()
+    
+    # ============= remove entries with slack or pg_max = 0 ================
     pg_max_zero_mask = pg_max_values.flatten() < 1e-9  # shape: (n_gens,)
     qg_max_zero_mask = qg_max_values.flatten() < 1e-9  # shape: (n_gens,)
     slack_bus_indices = np.where(base_ppc['bus'][:, 1] == 3)[0]  # BUS_TYPE == 3 (slack)
@@ -274,7 +301,7 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
     qg_min_values = qg_min_values[qgen_mask_to_keep, :]
     qg_max_values = qg_max_values[qgen_mask_to_keep, :]
     
-    # only keep voltages at generators:
+    # ================= only keep voltages at generators: =======================
     gen_bus_indices = base_ppc['gen'][:, 0].astype(int)  # buses with generators
     mask = ~np.isin(gen_bus_indices, slack_bus_indices)
     gen_bus_indices_no_slack = gen_bus_indices[mask]
@@ -284,7 +311,15 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
     vm_min_values = vm_min_values[gen_bus_indices_no_slack, :]
     vm_max_values = vm_max_values[gen_bus_indices_no_slack, :]
     
-    # Min-max scaling for generators (across entries, axis=1 is gen dimension, axis=0 is sample dimension)
+    # =================== remove slack entries for vr and vi =====================
+    bus_indices = base_ppc['bus'][:, 0].astype(int)
+    mask = ~np.isin(bus_indices, slack_bus_indices)
+    
+    # remove slack bus
+    vr_tot = vr_tot[mask, :]
+    vi_tot = vi_tot[mask, :]
+    
+    # ============== Min-max scaling for generators (across entries, axis=1 is gen dimension, axis=0 is sample dimension) =========
     pg_max_values += 1e-6 # avoid numerical instability for very small min and max values
     pg_min_values -= 1e-6
     pg_denominator = np.where(pg_max_values - pg_min_values == 0, 1, pg_max_values - pg_min_values)
@@ -300,14 +335,21 @@ def generate_power_system_data(simulation_parameters, save_csv=True):
     vm_denominator = np.where(vm_max_values - vm_min_values == 0, 1, vm_max_values - vm_min_values)
     vm_scaled = (vm_np - vm_min_values) / vm_denominator
     
+    # Combine scaled outputs
     if combination == "pg_vm":
-        # Combine scaled outputs
         y_scaled = np.vstack([pg_scaled, vm_scaled])
         Y_nn_output = y_scaled.T  # transpose to (n_data_points, features)
     elif combination == "pg_qg":
-        # Combine scaled outputs
         y_scaled = np.vstack([pg_scaled, qg_scaled])
         Y_nn_output = y_scaled.T  # transpose to (n_data_points, features)
+    elif combination == "vr_vi":
+        y_scaled = np.vstack([vr_tot, vi_tot])
+        Y_nn_output = y_scaled.T  # transpose to (n_data_points, features)
+    elif combination == "surrogate":
+        y = np.vstack([vr_tot, vi_tot])
+        x = np.vstack([pinj_tot, qinj_tot])
+        Y_nn_output = y.T  # transpose to (n_data_points, features)
+        X_nn_output = x.T
     else:
         print("Combination not recognized")
 
