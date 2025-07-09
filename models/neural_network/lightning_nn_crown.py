@@ -36,7 +36,9 @@ class NeuralNetwork(pl.LightningModule):
         self.Input_Normalise.set_normalisation(minimum=input_statistics[0], delta=input_statistics[1])
 
     def normalise_output(self, output_statistics):
-        self.Output_De_Normalise.set_normalisation(delta=output_statistics)
+        # output_statistics is a tuple: (minimum, delta)
+        _, delta = output_statistics
+        self.Output_De_Normalise.set_normalisation(delta=delta)
 
 
     def forward(self, x):
@@ -87,7 +89,7 @@ class NeuralNetwork(pl.LightningModule):
         """
         #Layer 1
 
-        #x=self.Input_Normalise(x)
+        x=self.Input_Normalise(x)
 
         # x = F.linear(x, self.W_1, self.b_1)
         x = self.L_1(x)
@@ -110,7 +112,7 @@ class NeuralNetwork(pl.LightningModule):
         
         x = self.L_4(x)
 
-        #x = self.Output_De_Normalise(x)
+        x = self.Output_De_Normalise(x)
 
         
         return x

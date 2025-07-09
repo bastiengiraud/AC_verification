@@ -161,10 +161,9 @@ def normalise_network(model, Dem_train, data_stat):
     vrvi_min = data_stat['vrvi_min']
     vrvi_delta = data_stat['vrvi_delta']
 
-    input_stats = (torch.from_numpy(inj_min.reshape(-1,).astype(np.float64)),
-                   torch.from_numpy(inj_delta.reshape(-1,).astype(np.float64)))
-    output_stats = (torch.from_numpy(vrvi_min.reshape(-1,).astype(np.float64)),
-                   torch.from_numpy(vrvi_delta.reshape(-1,).astype(np.float64)))
+    input_stats = (inj_min.reshape(-1).double(), inj_delta.reshape(-1).double())
+    output_stats = (vrvi_min.reshape(-1).double(), vrvi_delta.reshape(-1).double())
+
 
     model.normalise_input(input_stats)
     model.normalise_output(output_stats)

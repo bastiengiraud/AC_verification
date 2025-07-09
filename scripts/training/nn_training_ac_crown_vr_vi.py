@@ -37,8 +37,8 @@ def train(config):
     vrvi_train_typ = torch.ones(vrvi_train.shape[0], 1).to(device)
 
     num_classes = vrvi_train.shape[1]
-    sd_min = simulation_parameters['true_system']['Sd_min']
-    sd_delta = simulation_parameters['true_system']['Sd_delta']
+    sd_min = torch.tensor(simulation_parameters['true_system']['Sd_min']).float().to(device)
+    sd_delta = torch.tensor(simulation_parameters['true_system']['Sd_delta']).float().to(device)
     
     _, vrvi_min, vrvi_max = min_max_scale_tensor(vrvi_train)
     vrvi_delta = vrvi_max - vrvi_min
@@ -61,7 +61,7 @@ def train(config):
     network_gen = normalise_network(network_gen, sd_train, data_stat) 
 
     # Convert NN to lirpa_model that can calculate bounds on output
-    lirpa_model = BoundedModule(network_gen, torch.empty_like(sd_train), device=device) 
+    lirpa_model = BoundedModule(network_gen, torch.empty_like(sd_train).float(), device=device) 
     print('Running on', device)
 
     x = sd_min.reshape(1, -1) + sd_delta.reshape(1, -1) / 2
@@ -104,11 +104,11 @@ def train(config):
         validation_loss = validate_epoch(network_gen, sd_test, vrvi_test)
         training_time = time.time() - start_time
         
-        if epoch % 20 == 0 and epoch != 0:
+        if epoch % 50 == 0 and epoch != 0:
             # Print MSE losses for both train and validation
             print(f"Epoch {epoch+1}/{config.epochs} — Train total loss: {training_loss:.6f}, Train MSE: {mse_criterion:.6f}, Validation MSE: {validation_loss:.6f}")
 
-        train_losses.append(training_loss.item())
+        train_losses.append(mse_criterion.item())
         test_losses.append(validation_loss.item())
 
         early_stopping(validation_loss, network_gen)
@@ -167,11 +167,12 @@ def normalise_network(model, sd_train, data_stat):
     sd_delta = data_stat['sd_delta']
     vrvi_min = data_stat['vrvi_min']
     vrvi_delta = data_stat['vrvi_delta']
+    
+    # print(sd_min.dtype, sd_delta.dtype, vrvi_min.dtype, vrvi_delta.dtype)
 
-    input_stats = (torch.from_numpy(sd_min.reshape(-1,).astype(np.float64)),
-                   torch.from_numpy(sd_delta.reshape(-1,).astype(np.float64)))
-    output_stats = (torch.from_numpy(vrvi_min.reshape(-1,).astype(np.float64)),
-                   torch.from_numpy(vrvi_delta.reshape(-1,).astype(np.float64)))
+    input_stats = (sd_min.reshape(-1).float(), sd_delta.reshape(-1).float())
+    output_stats = (vrvi_min.reshape(-1).float(), vrvi_delta.reshape(-1).float())
+
 
     model.normalise_input(input_stats)
     model.normalise_output(output_stats)

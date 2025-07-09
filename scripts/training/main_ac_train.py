@@ -32,7 +32,7 @@ def create_config():
         'LPF_weight': 1e-4,
         'N_enrich': 50,
         'Algo': True, # if True, add worst-case violation CROWN bounds during training
-        'Enrich': True,
+        'Enrich': False,
         'abc_method': 'backward', # "CROWN", "Dynamic-Forward", CROWN-Optimized, IBP, alpha-CROWN
     }
     config = SimpleNamespace(**parameters_dict)
