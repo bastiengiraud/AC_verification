@@ -6,7 +6,7 @@ from torch.nn.parameter import Parameter
 
 class NeuralNetwork(pl.LightningModule):
 
-    def __init__(self, num_features, hidden_layer_size = [100,100,100], num_output=1,pytorch_init_seed=0):
+    def __init__(self, num_features, hidden_layer_size = [5], num_output=1,pytorch_init_seed=0):
         torch.manual_seed(pytorch_init_seed)    
         super(NeuralNetwork, self).__init__()  
         # input layer
@@ -14,15 +14,7 @@ class NeuralNetwork(pl.LightningModule):
 
         self.bn1 = nn.BatchNorm1d(hidden_layer_size[0])
 
-        self.L_2 = nn.Linear(hidden_layer_size[0], hidden_layer_size[1])
-
-        self.bn2 = nn.BatchNorm1d(hidden_layer_size[1])
-
-        self.L_3 = nn.Linear(hidden_layer_size[1], hidden_layer_size[2])
-
-        self.bn3 = nn.BatchNorm1d(hidden_layer_size[2])
-
-        self.L_4 = nn.Linear(hidden_layer_size[2],num_output)
+        self.L_2 = nn.Linear(hidden_layer_size[0],num_output)
 
         # define activation function in constructor
         self.activation = torch.nn.ReLU()
@@ -36,7 +28,8 @@ class NeuralNetwork(pl.LightningModule):
         self.Input_Normalise.set_normalisation(minimum=input_statistics[0], delta=input_statistics[1])
 
     def normalise_output(self, output_statistics):
-        self.Output_De_Normalise.set_normalisation(minimum=output_statistics[0], delta=output_statistics[1])
+        self.Output_De_Normalise.set_normalisation(output_statistics[0], output_statistics[1])
+
 
 
 
@@ -55,22 +48,11 @@ class NeuralNetwork(pl.LightningModule):
         x = self.L_1(x)
         # x = self.bn1(x)
         x = self.activation(x)
-
+        
         #Layer 2
-        # x = F.linear(x, self.W_2, self.b_2)
-        x = self.L_2(x)
-        # x = self.bn2(x)
-        x = self.activation(x)
-        
-        # x = F.linear(x, self.W_3, self.b_3)
-        x = self.L_3(x)
-        # x = self.bn3(x)
-        x = self.activation(x)
-        
-        #Layer 3
         # x = F.linear(x, self.W_4, self.b_4)
         
-        x = self.L_4(x)
+        x = self.L_2(x)
 
         x = self.Output_De_Normalise(x)
 
@@ -94,22 +76,11 @@ class NeuralNetwork(pl.LightningModule):
         x = self.L_1(x)
         # x = self.bn1(x)
         x = self.activation(x)
-
+        
         #Layer 2
-        # x = F.linear(x, self.W_2, self.b_2)
-        x = self.L_2(x)
-        # x = self.bn2(x)
-        x = self.activation(x)
-        
-        # x = F.linear(x, self.W_3, self.b_3)
-        x = self.L_3(x)
-        # x = self.bn3(x)
-        x = self.activation(x)
-        
-        #Layer 3
         # x = F.linear(x, self.W_4, self.b_4)
         
-        x = self.L_4(x)
+        x = self.L_2(x)
 
         x = self.Output_De_Normalise(x)
 
@@ -130,21 +101,11 @@ class NeuralNetwork(pl.LightningModule):
         # x = self.bn1(x)
         x = self.activation(x)
 
-        #Layer 2
-        # x = F.linear(x, self.W_2, self.b_2)
-        x = self.L_2(x)
-        # x = self.bn2(x)
-        x = self.activation(x)
-        
-        # x = F.linear(x, self.W_3, self.b_3)
-        x = self.L_3(x)
-        # x = self.bn3(x)
-        x = self.activation(x)
         
         #Layer 3
         # x = F.linear(x, self.W_4, self.b_4)
         
-        x = self.L_4(x)
+        x = self.L_2(x)
         
         x = self.clamp(x)
         
@@ -189,24 +150,22 @@ class Normalise(nn.Module):
 class Denormalise(nn.Module):
     def __init__(self, n_neurons):
         super(Denormalise, self).__init__()
-
+        self.minimum = nn.Parameter(data=torch.zeros(n_neurons), requires_grad=False)
         self.delta = nn.Parameter(data=torch.ones(n_neurons), requires_grad=False)
 
     def forward(self, input):
-        return  input * self.delta
+        return input * self.delta + self.minimum
 
-    def set_normalisation(self, delta):
-        if not len(delta.shape) == 1 :
+    def set_normalisation(self, minimum, delta):
+        if not (len(minimum.shape) == 1 and len(delta.shape) == 1):
             raise Exception('Input statistics are not 1-D tensors.')
 
-        # if not torch.nonzero(self.delta).shape[0] == delta.shape[0]:
-        #     raise Exception('Standard deviation in normalisation contains elements equal to 0.')
-        
-        if not torch.nonzero(delta).shape[0] == delta.shape[0]:
-            raise Exception('Standard deviation in normalisation contains elements equal to 0.')
+        if torch.any(delta <= 1e-12):
+            raise Exception('Standard deviation in denormalisation contains elements equal to 0 or near zero.')
 
+        self.minimum = nn.Parameter(data=minimum, requires_grad=False)
+        self.delta = nn.Parameter(data=delta, requires_grad=False)
 
-        self.delta =  nn.Parameter(data=delta, requires_grad=False)
 
 class Clamp(nn.Module):
     def __init__(self, n_neurons):

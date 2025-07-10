@@ -13,11 +13,9 @@ sys.path.insert(0, ROOT_DIR)
 for subdir in ['data', 'models', 'scripts/utils']:
     sys.path.insert(0, os.path.join(ROOT_DIR, subdir))
 
-from ac_opf.create_example_parameters import create_example_parameters
-from ac_opf.create_data import create_data, create_test_data
+from surrogate.create_example_parameters import create_example_parameters
+from surrogate.create_data import create_data, create_test_data
 from EarlyStopping import EarlyStopping
-from auto_LiRPA import BoundedModule, BoundedTensor
-from auto_LiRPA.perturbations import PerturbationLpNorm
 from neural_network.lightning_nn_surrogate import NeuralNetwork
 # from LiRPANet import LiRPANet
 
@@ -58,6 +56,7 @@ def train(config):
     inj_test = torch.tensor(inj_test).float().to(device)
     vrvi_test = torch.tensor(vrvi_test).float().to(device)
 
+    # build network
     network_gen = build_network(inj_train.shape[1], num_classes, config.hidden_layer_size,
                                 config.n_hidden_layers, config.pytorch_init_seed)
     network_gen = normalise_network(network_gen, inj_train, data_stat) # data is already normalized
@@ -73,6 +72,7 @@ def train(config):
 
     path = f'checkpoint_surrogate_{n_buses}_{config.hidden_layer_size}_{config.Algo}.pt'
     path_dir = os.path.join(model_save_directory, path)
+    
     early_stopping = EarlyStopping(patience=100, verbose=False, NN_input=inj_train, path=path_dir)
 
     train_losses = []
@@ -85,6 +85,8 @@ def train(config):
             InputNN = torch.cat((inj_train, X), 0).to(device)
             OutputNN = torch.cat((vrvi_train, Y), 0).to(device)
             typNN = torch.cat((Gen_train_typ, typ), 0).to(device)
+            
+            # shuffle data
             idx = torch.randperm(InputNN.shape[0])
             InputNN, OutputNN, typNN = InputNN[idx], OutputNN[idx], typNN[idx]
         else:
@@ -186,13 +188,10 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
     get_slice = lambda i, size: range(i * size, (i + 1) * size)
     num_samples = Dem_train.shape[0]
     num_batches = num_samples // config.batch_size
-    Gen_delta = simulation_parameters['true_system']['Sg_delta']
-    n_gens = simulation_parameters['general']['n_gbus']
-    n_loads = Dem_train.shape[1]
-    n_bus = simulation_parameters['general']['n_buses']
+
     RELU = nn.ReLU()
     loss_sum = 0
-    
+
  
     preds = []
     targets = []
@@ -200,7 +199,7 @@ def train_epoch(network_gen, Dem_train, Gen_train, typ, optimizer, config, simul
     for i in range(num_batches):
         optimizer.zero_grad()
         slce = get_slice(i, config.batch_size)
-        Gen_output = network_gen.forward_train(Dem_train[slce])
+        Gen_output = network_gen.forward_train(Dem_train[slce].T)
         Gen_target = Gen_train[slce]
         
         
