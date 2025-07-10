@@ -157,6 +157,9 @@ class Normalise(nn.Module):
 
         self.minimum = nn.Parameter(data=minimum, requires_grad=False)
         self.delta = nn.Parameter(data=delta, requires_grad=False)
+    
+    def get_normalisation_stats(self): # Add this for inspection
+        return self.minimum, self.delta
 
 
 class Denormalise(nn.Module):
@@ -177,6 +180,9 @@ class Denormalise(nn.Module):
 
         self.minimum = nn.Parameter(data=minimum, requires_grad=False)
         self.delta = nn.Parameter(data=delta, requires_grad=False)
+    
+    def get_normalisation_stats(self): # Add this for inspection
+        return self.minimum, self.delta
 
 
 class Clamp(nn.Module):

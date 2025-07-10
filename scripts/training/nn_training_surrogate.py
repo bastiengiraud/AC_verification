@@ -27,28 +27,80 @@ def to_np(x):
 def train(config):
     n_buses = config.test_system
     simulation_parameters = create_example_parameters(n_buses)
+    n_lines = simulation_parameters['true_system']['n_line'] 
 
     # Training Data
     vrect_train, sfl_train = create_data(simulation_parameters=simulation_parameters)
     vrect_train = torch.tensor(vrect_train).float().to(device)
     sfl_train = torch.tensor(sfl_train).float().to(device)
     Gen_train_typ = torch.ones(sfl_train.shape[0], 1).to(device)
+    
+    # get b and g values
+    b_min_val = np.min(simulation_parameters['true_system']['b'])
+    b_max_val = np.max(simulation_parameters['true_system']['b'])
+    g_min_val = np.min(simulation_parameters['true_system']['g']) 
+    g_max_val = np.max(simulation_parameters['true_system']['g']) 
 
     # get scaling of input data
     num_classes = sfl_train.shape[1]
-    _, vrect_min, vrect_max = min_max_scale_tensor(vrect_train)
-    vrect_delta = vrect_max - vrect_min
+    global_volt_max_mag = simulation_parameters['true_system']['Volt_max'][0] # assuming all have the same v_max!
+    if isinstance(global_volt_max_mag, np.ndarray):
+        global_volt_max_mag = global_volt_max_mag.item()
+    global_volt_min_mag_for_vr_vi_bounds = -global_volt_max_mag
+    
+    # This avoids creating (1,) tensors and then needing to broadcast or reshape
+    vr_max_full = torch.full((n_lines,), global_volt_max_mag, dtype=torch.float32)
+    vr_min_full = torch.full((n_lines,), global_volt_min_mag_for_vr_vi_bounds, dtype=torch.float32)
+
+    vi_max_full = torch.full((n_lines,), global_volt_max_mag, dtype=torch.float32) # Same as vr_max_full
+    vi_min_full = torch.full((n_lines,), global_volt_min_mag_for_vr_vi_bounds, dtype=torch.float32) # Same as vr_min_full
+
+    b_min_tensor = torch.full((n_lines,), b_min_val, dtype=torch.float32)
+    b_max_tensor = torch.full((n_lines,), b_max_val, dtype=torch.float32)
+    g_min_tensor = torch.full((n_lines,), g_min_val, dtype=torch.float32)
+    g_max_tensor = torch.full((n_lines,), g_max_val, dtype=torch.float32)
+    
+    vrect_max = torch.stack([
+        vr_max_full,   # vr_f max
+        vi_max_full,   # vi_f max
+        vr_max_full,   # vr_t max (assuming vr_t has same max range as vr_f)
+        vi_max_full,   # vi_t max (assuming vi_t has same max range as vi_f)
+        g_max_tensor,  # g_l max
+        b_max_tensor   # b_l max
+    ], dim=1)
+
+    vrect_min = torch.stack([
+        vr_min_full,   # vr_f min
+        vi_min_full,   # vi_f min
+        vr_min_full,   # vr_t min
+        vi_min_full,   # vi_t min
+        g_min_tensor,  # g_l min
+        b_min_tensor   # b_l min
+    ], dim=1)
+    
+    
+    vrect_global_min = vrect_min.min(dim=0, keepdim=True).values
+    vrect_global_max = vrect_max.max(dim=0, keepdim=True).values
+    vrect_delta = vrect_global_max - vrect_global_min
     vrect_delta[vrect_delta <= 1e-12] = 1.0  # Safeguard
 
     # get scaling of output data
-    _, sfl_min, sfl_max = min_max_scale_tensor(sfl_train)
-    sfl_delta = sfl_max - sfl_min
+    sfl_min = -torch.tensor(simulation_parameters['true_system']['L_limit'], dtype=torch.float32).T / 100
+    sfl_max = torch.tensor(simulation_parameters['true_system']['L_limit'], dtype=torch.float32).T / 100
+    
+    # Create a (6,) tensor where all elements are the same global min/max
+    sfl_min_tot = sfl_min.repeat(1, 6)
+    sfl_max_tot = sfl_max.repeat(1, 6)
+    
+    sfl_global_min_tot = sfl_min_tot.min(dim=0, keepdim=True).values
+    sfl_global_max_tot = sfl_max_tot.max(dim=0, keepdim=True).values
+    sfl_delta = sfl_global_max_tot - sfl_global_min_tot
     sfl_delta[sfl_delta <= 1e-12] = 1.0
 
     data_stat = {
-        'vrect_min': vrect_min,
+        'vrect_min': vrect_global_min,
         'vrect_delta': vrect_delta,
-        'sfl_min': sfl_min,
+        'sfl_min': sfl_global_min_tot,
         'sfl_delta': sfl_delta,
     }
 
@@ -168,6 +220,7 @@ def normalise_network(model, vrect_train, data_stat):
 
     input_stats = (vrect_min.reshape(-1).float(), vrect_delta.reshape(-1).float())
     output_stats = (sfl_min.reshape(-1).float(), sfl_delta.reshape(-1).float())
+
 
 
     model.normalise_input(input_stats)

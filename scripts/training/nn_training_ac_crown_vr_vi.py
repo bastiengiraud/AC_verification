@@ -223,7 +223,7 @@ def train_epoch(network_gen, sd_train, vrvi_train, typ, optimizer, config, surro
         loss_gen = config.crit_weight * mse_criterion                 # supervised learning, difference from label
         
         if epoch > 50:
-            flow_violation = compute_flow_violation(surrogate, Gen_output, simulation_parameters)
+            flow_violation = config.line_viol_weight * compute_flow_violation(surrogate, Gen_output, simulation_parameters)
         else:
             flow_violation = 0
         
@@ -232,7 +232,7 @@ def train_epoch(network_gen, sd_train, vrvi_train, typ, optimizer, config, surro
 
         total_loss.backward()
         optimizer.step()
-        loss_sum += loss_gen
+        loss_sum += total_loss
     
     loss_epoch = loss_sum / num_batches
 
@@ -254,15 +254,12 @@ def compute_flow_violation(surrogate, nn_output, simulation_parameters):
     tbus = torch.tensor(simulation_parameters['true_system']['tbus'], dtype=torch.long)
     g_l = torch.tensor(simulation_parameters['true_system']['g'], dtype=torch.float32).unsqueeze(0).repeat(batch_size, 1)
     b_l = torch.tensor(simulation_parameters['true_system']['b'], dtype=torch.float32).unsqueeze(0).repeat(batch_size, 1)
-    s_max = torch.tensor(simulation_parameters['true_system']['L_limit'], dtype=torch.float32).unsqueeze(0)
+    s_max = torch.tensor(simulation_parameters['true_system']['L_limit'], dtype=torch.float32).unsqueeze(0) / 100
     
     # extract rect voltages (excluding slack)
     vr_nn = nn_output[:, :n_bus - 1]
     vi_nn = nn_output[:, n_bus - 1:]
     
-    print(vr_nn.shape, vi_nn.shape)
-    print(slack_idx)
-
     # insert slack voltages at correct position
     vr = torch.cat([vr_nn[:, :slack_idx], torch.ones(batch_size, 1), vr_nn[:, slack_idx:]], dim=1)
     vi = torch.cat([vi_nn[:, :slack_idx], torch.zeros(batch_size, 1), vi_nn[:, slack_idx:]], dim=1)
@@ -273,27 +270,26 @@ def compute_flow_violation(surrogate, nn_output, simulation_parameters):
     vr_t = vr[:, tbus]
     vi_t = vi[:, tbus]
     
-    print(vr_f.shape)
-    
     # prepare surrogate input: shape (batch * n_line, 6)
     surrogate_input = torch.stack([vr_f, vi_f, vr_t, vi_t, g_l, b_l], dim=2)
-    print(surrogate_input.shape)
     surrogate_input = surrogate_input.reshape(-1, 6)
-    print(surrogate_input.shape)
-    
+
     # run surrogate model
-    flows_surrogate = surrogate(surrogate_input)  # shape: (batch * n_line, 6)
-    print(flows_surrogate.shape)
+    flows_surrogate = surrogate.forward_train(surrogate_input)  # shape: (batch * n_line, 6)
     
     # extract Sf and St magnitudes (first and fourth outputs)
-    Sf = flows_surrogate[:, 0].reshape(batch_size, n_line)
-    St = flows_surrogate[:, 3].reshape(batch_size, n_line)
-    S_mag = torch.maximum(Sf, St)
-
+    sf = flows_surrogate[:, 0].reshape(batch_size, n_line)
+    st = flows_surrogate[:, 3].reshape(batch_size, n_line)
+    s_mag = torch.abs(torch.maximum(sf, st))
+    
+    # print(s_mag[0,:])
+    # print(s_max)
+    
     # calculate violations
-    s_max = s_max.to(S_mag.device)
-    violations = torch.relu(S_mag - s_max)  # shape (batch, n_line)
+    s_max = s_max.to(s_mag.device)
+    violations = torch.relu(s_mag - s_max)  # shape (batch, n_line)
     line_loss = violations.mean()
+    
 
     return line_loss
     

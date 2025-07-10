@@ -27,6 +27,7 @@ def create_config():
         'pg_viol_weight': 0,
         'qg_viol_weight': 0,
         'vm_viol_weight': 0,
+        'line_viol_weight': 1e2,
         'crit_weight': 1e4,
         'PF_weight': 1e-4,
         'LPF_weight': 1e-4,
@@ -54,8 +55,8 @@ def main():
         from nn_training_ac_crown_pg_qg import train
     elif nn_config == 'vr_vi':
         from nn_training_ac_crown_vr_vi import train
-    elif nn_config == 'surrogate':
-        from nn_training_surrogate import train
+    # elif nn_config == 'surrogate':
+    #     from nn_training_surrogate import train
     else:
         print("Training paradigm not recognized.")
     
