@@ -4,17 +4,21 @@ import pytorch_lightning as pl, torch, torch.nn as nn
 from torch import Tensor
 from torch.nn.parameter import Parameter
 
-class NeuralNetwork(pl.LightningModule):
+class SurrogateModel(pl.LightningModule):
 
-    def __init__(self, num_features, hidden_layer_size = [5], num_output=1,pytorch_init_seed=0):
+    def __init__(self, num_features, hidden_layer_size = [5,5], num_output=1,pytorch_init_seed=0):
         torch.manual_seed(pytorch_init_seed)    
-        super(NeuralNetwork, self).__init__()  
+        super(SurrogateModel, self).__init__()  
         # input layer
         self.L_1 = nn.Linear(num_features, hidden_layer_size[0])
 
         self.bn1 = nn.BatchNorm1d(hidden_layer_size[0])
 
-        self.L_2 = nn.Linear(hidden_layer_size[0],num_output)
+        self.L_2 = nn.Linear(hidden_layer_size[0], hidden_layer_size[1])
+        
+        self.bn2 = nn.BatchNorm1d(hidden_layer_size[1])
+
+        self.L_3 = nn.Linear(hidden_layer_size[1],num_output)
 
         # define activation function in constructor
         self.activation = torch.nn.ReLU()
@@ -50,9 +54,11 @@ class NeuralNetwork(pl.LightningModule):
         x = self.activation(x)
         
         #Layer 2
-        # x = F.linear(x, self.W_4, self.b_4)
+        #x = F.linear(x, self.W_4, self.b_4)
         
         x = self.L_2(x)
+        x = self.activation(x)
+        x = self.L_3(x)
 
         x = self.Output_De_Normalise(x)
 
@@ -81,8 +87,11 @@ class NeuralNetwork(pl.LightningModule):
         # x = F.linear(x, self.W_4, self.b_4)
         
         x = self.L_2(x)
+        x = self.activation(x)
+        x = self.L_3(x)
 
         x = self.Output_De_Normalise(x)
+        
 
         
         return x
@@ -106,6 +115,9 @@ class NeuralNetwork(pl.LightningModule):
         # x = F.linear(x, self.W_4, self.b_4)
         
         x = self.L_2(x)
+        x = self.activation(x)
+        x = self.L_3(x)
+        
         
         x = self.clamp(x)
         

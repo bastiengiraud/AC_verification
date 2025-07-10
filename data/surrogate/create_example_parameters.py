@@ -4,6 +4,7 @@ import os
 import pandapower as pp
 import pandapower.converter as pc
 from pypower.makeYbus import makeYbus
+from pypower.idx_brch import F_BUS, T_BUS, BR_B, BR_R, BR_X
 
 
 
@@ -226,12 +227,24 @@ def create_example_parameters(n_buses: int):
         # Optional: convert to dense arrays if needed for torch
         Bp_dense = np.array(Bp.todense())
         Bpp_dense = np.array(Bpp.todense())
+              
         
-        # 8. some additional stuff...
-        from_buses_np = ppc['branch'][:, 0].astype(int)
-        to_buses_np = ppc['branch'][:, 1].astype(int)
-        R_np = ppc['branch'][:, 2]
-        X_np = ppc['branch'][:, 3]
+        # additional data for surrogate
+        # get vector of f and t buses
+        fbus = ppc['branch'][:, F_BUS].astype(int)
+        tbus = ppc['branch'][:, T_BUS].astype(int)
+        
+        # Get series impedance components
+        r = ppc['branch'][:, BR_R]
+        x = ppc['branch'][:, BR_X]
+
+        # Avoid division by zero
+        z = r + 1j * x
+        y = 1 / z
+        
+        # obtain G (conductance) and B (susceptance) of lines
+        g = y.real
+        b = y.imag
 
 
     except Exception as e:
@@ -268,10 +281,11 @@ def create_example_parameters(n_buses: int):
                               'pv_buses': pv_buses,
                               'pg_active': pg_active_indices,
                               'slack_bus': slack_bus_idx,
-                              'from_bus': from_buses_np,
-                              'to_bus': to_buses_np,
-                              'R': R_np,
-                              'X': X_np,
+                              'fbus': fbus,
+                              'tbus': tbus,
+                              'g': g,
+                              'b': b,
+                              
 
                               }
 
@@ -286,8 +300,8 @@ def create_example_parameters(n_buses: int):
     # -----------------------------------------------------------------------------------------------
     # Parameters for data creation
     # -----------------------------------------------------------------------------------------------
-    n_data_points = 1000
-    n_test_data_points = 800
+    n_data_points = 15_000
+    n_test_data_points = 2_000
 
     data_creation_parameters = {'n_data_points': n_data_points,
                                 'n_test_data_points': n_test_data_points,
